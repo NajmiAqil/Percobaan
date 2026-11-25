@@ -7,6 +7,7 @@ import streamlit as st
 
 
 MODEL_PATH = Path(__file__).with_name("random_forest_regressor_model.pkl")
+PERSON_ID_COLUMN = "person_id"
 
 INPUT_SECTIONS = {
     "Profil": [
@@ -130,6 +131,8 @@ INTEGER_FEATURES = {
     "age",
     "household_size",
     "dependents",
+    "deductible",
+    "copay",
     "visits_last_year",
     "hospitalizations_last_3yrs",
     "days_hospitalized_last_3yrs",
@@ -380,17 +383,26 @@ st.download_button(
 upload_tab, manual_tab = st.tabs(["Unggah CSV", "Input terarah"])
 
 with upload_tab:
+    st.caption(
+        "CSV harus berisi 62 fitur model. Kolom person_id boleh disertakan, "
+        "tetapi akan diabaikan dan tidak ikut prediksi."
+    )
     uploaded_file = st.file_uploader("Pilih file CSV", type=["csv"])
     if uploaded_file is not None:
         try:
             uploaded_data = pd.read_csv(uploaded_file)
-            st.dataframe(uploaded_data.head(10), use_container_width=True)
+            preview_data = uploaded_data.drop(
+                columns=[PERSON_ID_COLUMN], errors="ignore"
+            )
+            st.dataframe(preview_data.head(10), use_container_width=True)
 
             missing_columns = [
                 name for name in feature_names if name not in uploaded_data.columns
             ]
             extra_columns = [
-                name for name in uploaded_data.columns if name not in feature_names
+                name
+                for name in uploaded_data.columns
+                if name not in feature_names and name != PERSON_ID_COLUMN
             ]
             if missing_columns:
                 st.error("Kolom wajib belum tersedia: " + ", ".join(missing_columns))
